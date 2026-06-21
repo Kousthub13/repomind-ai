@@ -18,3 +18,10 @@ model User {
   password  String
   createdAt DateTime @default(now())
 }
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  githubUrl   String
+  createdAt   DateTime @default(now())
+}
