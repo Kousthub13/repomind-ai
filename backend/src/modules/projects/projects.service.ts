@@ -6,11 +6,15 @@ import { CreateProjectDto } from './dto/create-project.dto';
 export class ProjectsService {
     constructor(private prisma: PrismaService){}
 
-    async createProject(createProjectDto: CreateProjectDto){
-        return this.prisma.project.create({
+    async createProject(
+        createProjectDto: CreateProjectDto,
+        userId: string,
+    ) {
+    return this.prisma.project.create({
             data: {
                 name: createProjectDto.name,
                 githubUrl: createProjectDto.githubUrl,
+                userId,
             },
         });
     }
