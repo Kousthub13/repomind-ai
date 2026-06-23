@@ -21,9 +21,13 @@ export class ProjectsController {
         );
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get()
-    async getAllProjects() {
-        return this.projectsService.getAllProjects();
+    async getAllProjects(@Req() req: any) {
+        // console.log(req.user);
+        return this.projectsService.getAllProjects(
+            req.user.userId,
+        );
     }
 
     @Get(':id')
