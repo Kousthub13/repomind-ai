@@ -17,4 +17,13 @@ export class RepositoryController {
             respositoryDTO,
         );
     }
+
+    @Post('contents')
+    async getRepositoryContents(
+      @Body() repositoryDto: RepositoryDto,
+    ) {
+      return this.repositoryService.getRepositoryContents(
+        repositoryDto,
+      );
+    }
 }

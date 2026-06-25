@@ -29,4 +29,23 @@ export class RepositoryService {
             description: response.data.description,
         };
     }
+
+    async getRepositoryContents(repositoryDto: RepositoryDto) {
+        const githubUrl = repositoryDto.githubUrl;
+
+        const parts = githubUrl.split('/');
+
+        const owner = parts[3];
+        const repo = parts[4];
+
+        const response  = await firstValueFrom(
+            this.httpService.get(
+                `https://api.github.com/repos/${owner}/${repo}/contents`,
+            ),
+        );
+        return response.data.map((item: any) =>({
+            name: item.name,
+            type: item.type,
+        }))
+    }
 }
