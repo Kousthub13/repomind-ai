@@ -42,4 +42,15 @@ export class RepositoryController {
             repositoryDto,
         );
     }
+
+    @Post('source-files')
+    async getSourceFiles(
+        @Body() repositoryDto: RepositoryDto,
+    ) {
+        return this.repositoryService.getSourceFiles(
+            repositoryDto,
+        );
+    }
+
+    
 }
