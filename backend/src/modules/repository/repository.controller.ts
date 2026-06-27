@@ -52,5 +52,13 @@ export class RepositoryController {
         );
     }
 
-    
+    @Post("source-code")
+    async getRepositorySourceCode(
+        @Body() repositoryDto: RepositoryDto,
+    ) {
+        return this.repositoryService.getRepositorySourceCode(
+            repositoryDto,
+        );
+    }
+
 }

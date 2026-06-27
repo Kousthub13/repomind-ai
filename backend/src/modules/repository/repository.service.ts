@@ -110,7 +110,7 @@ export class RepositoryService {
         owner: string,
         repo: string,
         path = '',
-    ): Promise<String[]> {
+    ): Promise<string[]> {
         const response = await firstValueFrom(
             this.httpService.get(
                 `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
@@ -120,7 +120,7 @@ export class RepositoryService {
             ),
         );
 
-        const files: String[] = [];
+        const files: string[] = [];
 
         for (const item of response.data) {
             if(item.type === 'file'){
@@ -152,4 +152,31 @@ export class RepositoryService {
 
         return this.collectSourceFiles(owner, repo);
     }
+
+    async getRepositorySourceCode(
+        repositoryDto: RepositoryDto,
+    ) {
+        const sourceFiles = await this.getSourceFiles(repositoryDto);
+        
+        console.log(sourceFiles);
+        
+        const sourceCode: {
+            path: string | undefined;
+            content: any;
+        }[] = [];
+        
+        for (const file of sourceFiles) {
+        
+            const fileContent =
+                await this.getFileContent({
+                    githubUrl: repositoryDto.githubUrl,
+                    filePath: file,
+                });
+            
+            sourceCode.push(fileContent);
+        }
+
+        return sourceCode;
+    }
+
 }
