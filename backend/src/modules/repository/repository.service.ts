@@ -48,4 +48,53 @@ export class RepositoryService {
             type: item.type,
         }))
     }
+
+    async getReadMe(repositoryDto: RepositoryDto){
+        const githubUrl = repositoryDto.githubUrl;
+
+        const parts = githubUrl.split('/');
+
+        const owner = parts[3];
+        const repo = parts[4];
+
+        const response = await firstValueFrom(
+            this.httpService.get(
+                `https://api.github.com/repos/${owner}/${repo}/readme`,
+                {
+                    headers: {
+                        Accept: 'application/vnd.github.v3.raw',
+                    },
+                },
+            ),
+        );
+
+        return{
+            content: response.data,
+        };
+    }
+
+    async getFileContent(repositoryDto: RepositoryDto){
+        const githubUrl = repositoryDto.githubUrl;
+
+        const parts = githubUrl.split('/');
+
+        const owner = parts[3];
+        const repo = parts[4];
+
+        const response = await firstValueFrom(
+            this.httpService.get(
+                `https://api.github.com/repos/${owner}/${repo}/contents/${repositoryDto.filePath}`,
+                {
+                    headers: {
+                       Accept: 'application/vnd.github.raw',
+                    },
+                },
+            ),
+        );
+
+        return{
+            path: repositoryDto.filePath,
+            content: response.data,
+        };
+    }
 }

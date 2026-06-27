@@ -1,3 +1,5 @@
 export class RepositoryDto {
-    githubUrl: string;
+    githubUrl!: string;
+
+    filePath?: string;
 }

@@ -26,4 +26,20 @@ export class RepositoryController {
         repositoryDto,
       );
     }
+
+    @Post('readme')
+    async getReadme(
+      @Body() repositoryDto: RepositoryDto,
+    ) {
+      return this.repositoryService.getReadMe(repositoryDto);
+    }
+
+    @Post('file')
+    async getFileContent(
+        @Body() repositoryDto: RepositoryDto,
+    ) {
+        return this.repositoryService.getFileContent(
+            repositoryDto,
+        );
+    }
 }
