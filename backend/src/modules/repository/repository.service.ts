@@ -2,10 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { RepositoryDto } from './dto/repository.dto';
+import { CodeChunk } from './interfaces/code-chunk.interface';
+import { ChunkingService } from '../chunking/chunking.service';
 
 @Injectable()
+
 export class RepositoryService {
-    constructor(private httpService: HttpService){}
+    constructor(
+        private httpService: HttpService,
+        private readonly chunkingService: ChunkingService,
+    ){}
 
     private extractRepositoryInfo(githubUrl: string){
         const parts = githubUrl.split('/');
@@ -159,11 +165,8 @@ export class RepositoryService {
         const sourceFiles = await this.getSourceFiles(repositoryDto);
         
         console.log(sourceFiles);
-        
-        const sourceCode: {
-            path: string | undefined;
-            content: any;
-        }[] = [];
+
+        const chunks: CodeChunk[] = [];
         
         for (const file of sourceFiles) {
         
@@ -173,10 +176,41 @@ export class RepositoryService {
                     filePath: file,
                 });
             
-            sourceCode.push(fileContent);
+            chunks.push(
+                ...this.chunkingService.chunkContent(
+                    fileContent.path!,
+                    fileContent.content,
+                ),
+            );
         }
 
-        return sourceCode;
+        return chunks;
     }
+
+    // private readonly CHUNK_SIZE = 100;
+
+    // private chunkContent(
+    //     path: string,
+    //     content: string,
+    // ): CodeChunk[] {
+    //     const lines = content.split('\n');
+        
+
+    //     const chunks: CodeChunk[] = [];
+
+    //     let index = 0;
+
+    //     for (let i = 0; i < lines.length; i += this.CHUNK_SIZE) {
+    //         chunks.push({
+    //             path,
+    //             chunk: lines
+    //                 .slice(i, i + this.CHUNK_SIZE)
+    //                 .join('\n'),
+    //             chunkIndex: index++,
+    //         });
+    //     }
+    //     return chunks;
+    // }
+
 
 }
