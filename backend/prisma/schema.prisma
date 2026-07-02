@@ -29,4 +29,19 @@ model Project {
 
   userId      String
   user        User @relation(fields: [userId], references: [id])
+  embeddings  CodeEmbedding[]
+}
+
+model CodeEmbedding {
+  id         String @id @default(cuid())
+
+  path       String
+  chunk      String
+  ChunkIndex Int
+
+  embedding  Json
+
+  projectId  String
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 }

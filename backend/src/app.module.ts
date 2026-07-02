@@ -6,9 +6,18 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { RepositoryModule } from './modules/repository/repository.module';
-
+import { ChunkingModule } from './modules/chunking/chunking.module';
+import { EmbeddingModule } from './modules/embedding/embedding.module';
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, ProjectsModule, RepositoryModule],
+  imports: [
+            PrismaModule,
+            UsersModule, 
+            AuthModule, 
+            ProjectsModule, 
+            RepositoryModule, 
+            ChunkingModule, 
+            EmbeddingModule
+          ],
   controllers: [AppController],
   providers: [AppService],
 })
