@@ -37,7 +37,7 @@ model CodeEmbedding {
 
   path       String
   chunk      String
-  ChunkIndex Int
+  chunkIndex Int
 
   embedding  Json
 

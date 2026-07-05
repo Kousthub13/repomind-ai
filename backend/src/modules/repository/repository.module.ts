@@ -7,6 +7,7 @@ import { ChunkingModule } from '../chunking/chunking.module';
 @Module({
   imports: [HttpModule, ChunkingModule],
   controllers: [RepositoryController],
-  providers: [RepositoryService]
+  providers: [RepositoryService],
+  exports: [RepositoryService],
 })
 export class RepositoryModule {}

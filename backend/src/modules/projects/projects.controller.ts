@@ -40,5 +40,11 @@ export class ProjectsController {
         return this.projectsService.deleteProject(id);
     }
 
+    @Post(':id/index')
+    async indexProject(
+        @Param('id') projectId: string,
+    ) {
+        return this.projectsService.indexProject(projectId);
+    }
     
 }

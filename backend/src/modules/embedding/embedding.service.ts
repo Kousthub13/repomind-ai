@@ -12,11 +12,17 @@ export class EmbeddingService {
         });
     }
 
-    async generateEmbedding(text: string) {
+    async generateEmbedding(text: string): Promise<number[]> {
         const response = await this.ai.models.embedContent({
             model: "gemini-embedding-001",
             contents: text,
         });
+
+        const values = response.embeddings?.[0]?.values;
+
+        if (!values) {
+            throw new Error('Failed to generate embedding.');
+        }
 
         console.log(response);
         
@@ -24,7 +30,7 @@ export class EmbeddingService {
             throw new Error("Failed to generate embedding.");
         }
 
-        return response.embeddings[0].values;
+        return values;
     }
     
 }
