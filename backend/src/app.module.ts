@@ -8,6 +8,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { RepositoryModule } from './modules/repository/repository.module';
 import { ChunkingModule } from './modules/chunking/chunking.module';
 import { EmbeddingModule } from './modules/embedding/embedding.module';
+import { SearchModule } from './modules/search/search.module';
 @Module({
   imports: [
             PrismaModule,
@@ -16,7 +17,8 @@ import { EmbeddingModule } from './modules/embedding/embedding.module';
             ProjectsModule, 
             RepositoryModule, 
             ChunkingModule, 
-            EmbeddingModule
+            EmbeddingModule,
+            SearchModule,
           ],
   controllers: [AppController],
   providers: [AppService],
