@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { RepositoryService } from '../repository/repository.service';
 import { EmbeddingService } from '../embedding/embedding.service';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class ProjectsService {
@@ -60,6 +61,12 @@ export class ProjectsService {
             throw new NotFoundException('Project not found');
         }
 
+        await this.prisma.codeEmbedding.deleteMany({
+            where: {
+                projectId,
+            },
+        });
+
         const chunks = await this.repositoryService.getRepositorySourceCode({
             githubUrl: project.githubUrl,
         })
@@ -69,7 +76,7 @@ export class ProjectsService {
                 chunk.chunk,
             );
 
-            await this.prisma.codeEmbedding.create({
+            const codeEmbedding = await this.prisma.codeEmbedding.create({
                 data: {
                     path: chunk.path,
                     chunk: chunk.chunk,
@@ -78,6 +85,13 @@ export class ProjectsService {
                     projectId: project.id,
                 },
             });
+
+            const vector = `[${embedding.join(",")}]`;
+
+            await this.prisma.$executeRaw`
+                INSERT INTO code_embedding_vectors (id, embedding)
+                VALUES (${codeEmbedding.id}, ${vector}::vector)
+            `;
         }
 
         return {

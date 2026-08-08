@@ -1,36 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EmbeddingService } from '../embedding/embedding.service';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class SearchService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly embeddingService: EmbeddingService,
-    ){}
-
-    private cosineSimilarity(
-        vectorA: number[],
-        vectorB: number[],
-    ): number {
-        let dotProduct = 0;
-        let magnitudeA = 0;
-        let magnitudeB = 0;
-
-        for(let i = 0; i<vectorA.length; i++){
-            dotProduct += vectorA[i] * vectorB[i];
-            magnitudeA += vectorA[i] * vectorA[i];
-            magnitudeB += vectorB[i] * vectorB[i];
-        }
-
-        const denominator = Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB);
-
-        if(denominator === 0){ 
-            return 0;
-        }
-
-        return dotProduct / denominator;
-    }
+        private readonly aiService: AiService,
+    ) { }
 
     async search(
         projectId: string,
@@ -38,35 +17,62 @@ export class SearchService {
     ) {
         const queryEmbedding =
             await this.embeddingService.generateEmbedding(query);
-        
-        const codeEmbeddings =
-            await this.prisma.codeEmbedding.findMany({
-                where: {
-                    projectId,
-                },
-            });
-        
-        const results = codeEmbeddings.map((codeEmbedding) => {
 
-            const embedding = codeEmbedding.embedding as number[];
-        
-            const similarity = this.cosineSimilarity(
-                queryEmbedding,
-                embedding,
-            );
-        
-            return {
-                path: codeEmbedding.path,
-                chunk: codeEmbedding.chunk,
-                chunkIndex: codeEmbedding.chunkIndex,
-                similarity,
-            };
-        });
-    
-        results.sort(
-            (a, b) => b.similarity - a.similarity,
+        const vector = `[${queryEmbedding.join(",")}]`;
+
+        const results = await this.prisma.$queryRaw<
+            {
+                id: string;
+                path: string;
+                chunk: string;
+                chunkIndex: number;
+                similarity: number;
+            }[]
+        >`
+    SELECT
+        ce.id,
+        ce.path,
+        ce.chunk,
+        ce."chunkIndex",
+        1 - (cv.embedding <=> ${vector}::vector) AS similarity
+    FROM code_embedding_vectors cv
+    JOIN "CodeEmbedding" ce
+        ON cv.id = ce.id
+    WHERE ce."projectId" = ${projectId}
+      AND 1 - (cv.embedding <=> ${vector}::vector) >= 0.50
+    ORDER BY cv.embedding <=> ${vector}::vector
+    LIMIT 5;
+`;
+        if (results.length == 0){
+            return{
+                answer:
+                    "I couldn't find relevant information in the indexed repository.",
+                    sources: [],
+            }
+        }
+
+        const context = results
+            .map(
+                (result) => `
+File: ${result.path}
+
+${result.chunk}
+`,
+            )
+            .join('\n------------------------\n');
+
+        const answer = await this.aiService.generateAnswer(
+            query,
+            context,
         );
-    
-        return results.slice(0, 5);
+
+        return {
+            answer,
+            sources: results.map((result) => ({
+                path: result.path,
+                chunkIndex: result.chunkIndex,
+                similarity: result.similarity,
+            })),
+        };
     }
 }
