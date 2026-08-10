@@ -11,13 +11,13 @@ export class ProjectsService {
         private prisma: PrismaService,
         private repositoryService: RepositoryService,
         private embeddingService: EmbeddingService,
-    ){}
+    ) { }
 
     async createProject(
         createProjectDto: CreateProjectDto,
         userId: string,
     ) {
-    return this.prisma.project.create({
+        return this.prisma.project.create({
             data: {
                 name: createProjectDto.name,
                 githubUrl: createProjectDto.githubUrl,
@@ -56,44 +56,82 @@ export class ProjectsService {
                 id: projectId,
             },
         });
-
-        if(!project) {
+    
+        if (!project) {
             throw new NotFoundException('Project not found');
         }
-
-        await this.prisma.codeEmbedding.deleteMany({
-            where: {
-                projectId,
-            },
-        });
-
-        const chunks = await this.repositoryService.getRepositorySourceCode({
-            githubUrl: project.githubUrl,
-        })
-
-        for(const chunk of chunks) {
-            const embedding = await this.embeddingService.generateEmbedding(
-                chunk.chunk,
-            );
-
-            const codeEmbedding = await this.prisma.codeEmbedding.create({
-                data: {
-                    path: chunk.path,
-                    chunk: chunk.chunk,
-                    chunkIndex: chunk.chunkIndex,
-                    embedding,
-                    projectId: project.id,
-                },
+    
+        const chunks =
+            await this.repositoryService.getRepositorySourceCode({
+                githubUrl: project.githubUrl,
             });
-
-            const vector = `[${embedding.join(",")}]`;
-
-            await this.prisma.$executeRaw`
-                INSERT INTO code_embedding_vectors (id, embedding)
-                VALUES (${codeEmbedding.id}, ${vector}::vector)
-            `;
+    
+        const BATCH_SIZE = 20;
+    
+        for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+            const batch = chunks.slice(i, i + BATCH_SIZE);
+    
+            const existingChunks =
+                await this.prisma.codeEmbedding.findMany({
+                    where: {
+                        projectId,
+                        chunkIndex: {
+                            in: batch.map((chunk) => chunk.chunkIndex),
+                        },
+                    },
+                    select: {
+                        chunkIndex: true,
+                    },
+                });
+    
+            const existingChunkIndexes = new Set(
+                existingChunks.map((chunk) => chunk.chunkIndex),
+            );
+    
+            const chunksToProcess = batch.filter(
+                (chunk) => !existingChunkIndexes.has(chunk.chunkIndex),
+            );
+    
+            if (chunksToProcess.length === 0) {
+                console.log(`Batch ${i} already indexed. Skipping.`);
+                continue;
+            }
+    
+            console.log(
+                `Embedding batch: ${i} - ${
+                    i + batch.length - 1
+                } of ${chunks.length}`,
+            );
+    
+            const embeddings =
+                await this.embeddingService.generateEmbeddings(
+                    chunksToProcess.map((chunk) => chunk.chunk),
+                );
+    
+            for (let j = 0; j < chunksToProcess.length; j++) {
+                const chunk = chunksToProcess[j];
+                const embedding = embeddings[j];
+    
+                const codeEmbedding =
+                    await this.prisma.codeEmbedding.create({
+                        data: {
+                            path: chunk.path,
+                            chunk: chunk.chunk,
+                            chunkIndex: chunk.chunkIndex,
+                            embedding,
+                            projectId: project.id,
+                        },
+                    });
+    
+                const vector = `[${embedding.join(",")}]`;
+    
+                await this.prisma.$executeRaw`
+                    INSERT INTO code_embedding_vectors (id, embedding)
+                    VALUES (${codeEmbedding.id}, ${vector}::vector)
+                `;
+            }
         }
-
+    
         return {
             message: 'Project indexed successfully',
             totalChunks: chunks.length,

@@ -28,6 +28,44 @@ export class RepositoryService {
         };
     }
 
+    private async githubGet(
+        url: string,
+        config: any = {},
+    ): Promise<any> {
+        const MAX_RETRIES = 3;
+    
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                return await firstValueFrom(
+                    this.httpService.get(url, {
+                        ...config,
+                        headers: {
+                            ...this.getGithubHeaders(),
+                            ...(config.headers || {}),
+                        },
+                        timeout: 15000,
+                    }),
+                );
+            } catch (error) {
+                console.error(
+                    `GitHub request failed (attempt ${attempt}/${MAX_RETRIES}):`,
+                    url,
+                    error instanceof Error ? error.message : error,
+                );
+    
+                if (attempt === MAX_RETRIES) {
+                    throw error;
+                }
+    
+                await new Promise((resolve) =>
+                    setTimeout(resolve, 1000 * attempt),
+                );
+            }
+        }
+    
+        throw new Error('GitHub request failed.');
+    }
+
     async getRepositoryInfo(repositoryDto: RepositoryDto){
         const githubUrl = repositoryDto.githubUrl;
         
@@ -94,16 +132,13 @@ export class RepositoryService {
 
         const { owner, repo } = this.extractRepositoryInfo(repositoryDto.githubUrl);
 
-        const response = await firstValueFrom(
-            this.httpService.get(
-                `https://api.github.com/repos/${owner}/${repo}/contents/${repositoryDto.filePath}`,
-                {
-                    headers: {
-                        ...this.getGithubHeaders(),
-                       Accept: 'application/vnd.github.raw',
-                    },
+        const response = await this.githubGet(
+            `https://api.github.com/repos/${owner}/${repo}/contents/${repositoryDto.filePath}`,
+            {
+                headers: {
+                    Accept: 'application/vnd.github.raw',
                 },
-            ),
+            },
         );
 
         return{
@@ -117,13 +152,8 @@ export class RepositoryService {
         repo: string,
         path = '',
     ): Promise<string[]> {
-        const response = await firstValueFrom(
-            this.httpService.get(
-                `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
-                {
-                    headers: this.getGithubHeaders(),
-                },
-            ),
+        const response = await this.githubGet(
+            `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
         );
 
         const files: string[] = [];
