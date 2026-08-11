@@ -7,6 +7,9 @@ import {
     indexProject,
     searchProject,
 } from "@/services/api";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useAppSelector } from "@/store/hooks";
 
 interface Project {
@@ -275,9 +278,41 @@ export default function ProjectDetailsPage() {
                             </h3>
 
                             <div className="mt-3 rounded-lg bg-gray-50 p-5">
-                                <p className="whitespace-pre-wrap text-gray-800">
-                                    {result.answer}
-                                </p>
+                                <div className="text-gray-800">
+                                    <ReactMarkdown
+                                        components={{
+                                            code({ className, children, ...props }) {
+                                                const match = /language-(\w+)/.exec(
+                                                    className || "",
+                                                );
+
+                                                return match ? (
+                                                    <SyntaxHighlighter
+                                                        style={vscDarkPlus}
+                                                        language={match[1]}
+                                                        PreTag="div"
+                                                        customStyle={{
+                                                            margin: "12px 0",
+                                                            borderRadius: "8px",
+                                                            padding: "16px",
+                                                        }}
+                                                    >
+                                                        {String(children).replace(/\n$/, "")}
+                                                    </SyntaxHighlighter>
+                                                ) : (
+                                                    <code
+                                                        className="rounded bg-gray-200 px-1 py-0.5 text-sm"
+                                                        {...props}
+                                                    >
+                                                        {children}
+                                                    </code>
+                                                );
+                                            },
+                                        }}
+                                    >
+                                        {result.answer}
+                                    </ReactMarkdown>
+                                </div>
                             </div>
 
                             {/* Sources */}
