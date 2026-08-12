@@ -24,6 +24,10 @@ const authSlice = createSlice({
         setToken: (state, action: PayloadAction<string>) => {
             state.token = action.payload;
             state.isAuthenticated = true;
+        
+            if (typeof window !== "undefined") {
+                localStorage.setItem("token", action.payload);
+            }
         },
 
         setUser: (state, action: PayloadAction<User>) => {
@@ -34,6 +38,10 @@ const authSlice = createSlice({
             state.token = null;
             state.user = null;
             state.isAuthenticated = false;
+        
+            if (typeof window !== "undefined") {
+                localStorage.removeItem("token");
+            }
         },
     },
 });
