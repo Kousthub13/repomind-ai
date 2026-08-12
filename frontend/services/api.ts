@@ -131,3 +131,25 @@ export async function createProject(
 
     return response.json();
 }
+
+export async function registerUser(data: {
+    email: string;
+    password: string;
+}) {
+    const response = await fetch(
+        "http://localhost:3001/users/register",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        },
+    );
+
+    if (!response.ok) {
+        throw new Error("Registration failed");
+    }
+
+    return response.json();
+}
