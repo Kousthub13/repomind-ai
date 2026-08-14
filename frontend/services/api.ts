@@ -60,6 +60,28 @@ export async function getProjectById(
     return response.json();
 }
 
+export async function deleteProject(
+    token: string,
+    projectId: string,
+) {
+    const response = await fetch(
+        `${API_URL}/projects/${projectId}`,
+        {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+        },
+    );
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch projects");
+    }
+
+    return response.json();
+}
+
 export async function indexProject(
     token: string,
     projectId: string,

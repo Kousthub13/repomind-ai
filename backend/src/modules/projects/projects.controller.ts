@@ -7,7 +7,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('projects')
 export class ProjectsController {
-    constructor(private projectsService: ProjectsService) {}
+    constructor(private projectsService: ProjectsService) { }
 
     @UseGuards(JwtAuthGuard)
     @Post()
@@ -35,9 +35,16 @@ export class ProjectsController {
         return this.projectsService.getProjectById(id);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Delete(':id')
-    async deleteProject(@Param('id') id: string) {
-        return this.projectsService.deleteProject(id);
+    async deleteProject(
+        @Param('id') id: string,
+        @Req() req: any,
+    ) {
+        return this.projectsService.deleteProject(
+            id,
+            req.user.userId,
+        );
     }
 
     @Post(':id/index')
@@ -46,5 +53,5 @@ export class ProjectsController {
     ) {
         return this.projectsService.indexProject(projectId);
     }
-    
+
 }

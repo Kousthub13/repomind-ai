@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getProjects } from "@/services/api";
+import {
+    getProjects,
+    deleteProject,
+} from "@/services/api";
 import { useAppSelector } from "@/store/hooks";
 import { useAppDispatch } from "@/store/hooks";
 import { logout } from "@/store/slice/authSlice";
@@ -47,6 +50,34 @@ export default function DashboardPage() {
     const handleLogout = () => {
         dispatch(logout());
         router.push("/login");
+    };
+
+    const handleDeleteProject = async (projectId: string) => {
+        if (!token) {
+            router.push("/login");
+            return;
+        }
+
+        const confirmed = window.confirm(
+            "Are you sure you want to delete this project?",
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            await deleteProject(token, projectId);
+
+            setProjects((currentProjects) =>
+                currentProjects.filter(
+                    (project) => project.id !== projectId,
+                ),
+            );
+        } catch (error) {
+            console.error(error);
+            setError("Failed to delete project.");
+        }
     };
 
     return (
@@ -136,16 +167,27 @@ export default function DashboardPage() {
                                     {project.githubUrl}
                                 </p>
 
-                                <button
-                                    onClick={() =>
-                                        router.push(
-                                            `/projects/${project.id}`,
-                                        )
-                                    }
-                                    className="mt-6 font-medium text-gray-900 hover:underline"
-                                >
-                                    Open Project →
-                                </button>
+                                <div className="mt-6 flex items-center justify-between">
+                                    <button
+                                        onClick={() =>
+                                            router.push(
+                                                `/projects/${project.id}`,
+                                            )
+                                        }
+                                        className="font-medium text-gray-900 hover:underline"
+                                    >
+                                        Open Project →
+                                    </button>
+
+                                    <button
+                                        onClick={() =>
+                                            handleDeleteProject(project.id)
+                                        }
+                                        className="font-medium text-red-600 hover:text-red-800"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
