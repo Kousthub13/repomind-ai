@@ -16,6 +16,8 @@ interface Project {
     id: string;
     name: string;
     githubUrl: string;
+    createdAt: string;
+    isIndexed: boolean;
 }
 
 interface SearchResult {
@@ -206,10 +208,17 @@ export default function ProjectDetailsPage() {
                         Repository Index
                     </h2>
 
-                    <p className="mt-2 text-gray-600">
-                        Index this repository so RepoMind AI can
-                        understand and search its source code.
-                    </p>
+                    {project.isIndexed ? (
+                        <p className="mt-2 text-green-600">
+                            ✓ This repository has been indexed and is ready
+                            for AI code search.
+                        </p>
+                    ) : (
+                        <p className="mt-2 text-gray-600">
+                            Index this repository so RepoMind AI can
+                            understand and search its source code.
+                        </p>
+                    )}
 
                     {error && (
                         <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
@@ -224,7 +233,9 @@ export default function ProjectDetailsPage() {
                     >
                         {indexing
                             ? "Indexing Repository..."
-                            : "Index Repository"}
+                            : project.isIndexed
+                                ? "Re-index Repository"
+                                : "Index Repository"}
                     </button>
                 </div>
 
