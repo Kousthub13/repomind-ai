@@ -93,9 +93,11 @@ export default function ProjectDetailsPage() {
             alert("Project indexed successfully!");
         } catch (error) {
             console.error(error);
-
+        
             setError(
-                "Failed to index project. Please try again.",
+                error instanceof Error
+                    ? error.message
+                    : "Failed to index project. Please try again.",
             );
         } finally {
             setIndexing(false);
@@ -121,9 +123,11 @@ export default function ProjectDetailsPage() {
             setResult(data);
         } catch (error) {
             console.error(error);
-
+        
             setError(
-                "Failed to search the repository.",
+                error instanceof Error
+                    ? error.message
+                    : "Failed to search the repository.",
             );
         } finally {
             setSearching(false);

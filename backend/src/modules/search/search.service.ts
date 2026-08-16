@@ -30,6 +30,30 @@ export class SearchService {
             throw new NotFoundException('Project not found');
         }
 
+        const embedding = await this.prisma.codeEmbedding.findFirst({
+            where: {
+                projectId,
+            },
+            select: {
+                id: true,
+            },
+        });
+    
+        if (!embedding) {
+            return {
+                answer:
+                    'Please index the repository before using AI code search.',
+                sources: [],
+            };
+        }
+    
+        if (!query.trim()) {
+            return {
+                answer: 'Please enter a question about the repository.',
+                sources: [],
+            };
+        }
+
         const queryEmbedding =
             await this.embeddingService.generateEmbedding(query);
 

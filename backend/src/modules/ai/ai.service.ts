@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException, } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 
 @Injectable()
@@ -38,11 +38,39 @@ export class AiService {
             ${question}
         `;
 
-        const response = await this.ai.models.generateContent({
-            model: 'gemini-3.6-flash',
-            contents: prompt,
-        });
+        const MAX_RETRIES = 3;
 
-        return response.text ?? "No response generated.";
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                const response = await this.ai.models.generateContent({
+                    model: 'gemini-3.6-flash',
+                    contents: prompt,
+                });
+
+                return response.text ?? "No response generated.";
+
+            } catch (error) {
+                console.error(
+                    `AI generation attempt ${attempt} failed:`,
+                    error instanceof Error
+                        ? error.message
+                        : error,
+                );
+
+                if (attempt === MAX_RETRIES) {
+                    throw new ServiceUnavailableException(
+                        'AI service is temporarily unavailable. Please try again later.',
+                    );
+                }
+
+                await new Promise((resolve) =>
+                    setTimeout(resolve, 2000 * attempt),
+                );
+            }
+        }
+
+        throw new ServiceUnavailableException(
+            'AI service is temporarily unavailable. Please try again later.',
+        );
     }
 }

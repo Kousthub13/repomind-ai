@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { 
+       BadRequestException,
+       Injectable,
+       ServiceUnavailableException,
+    } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { RepositoryDto } from './dto/repository.dto';
@@ -46,15 +50,38 @@ export class RepositoryService {
                         timeout: 15000,
                     }),
                 );
-            } catch (error) {
+            } catch (error: any) {
+                const status = error?.response?.status;
+    
                 console.error(
                     `GitHub request failed (attempt ${attempt}/${MAX_RETRIES}):`,
                     url,
                     error instanceof Error ? error.message : error,
                 );
     
+                // These are not usually fixed by retrying.
+                if (status === 404) {
+                    throw new BadRequestException(
+                        'GitHub repository or file was not found.',
+                    );
+                }
+    
+                if (status === 401 || status === 403) {
+                    throw new BadRequestException(
+                        'GitHub authentication failed or access to the repository was denied.',
+                    );
+                }
+    
+                if (status === 429) {
+                    throw new ServiceUnavailableException(
+                        'GitHub API rate limit reached. Please try again later.',
+                    );
+                }
+    
                 if (attempt === MAX_RETRIES) {
-                    throw error;
+                    throw new ServiceUnavailableException(
+                        'Unable to reach GitHub right now. Please try again later.',
+                    );
                 }
     
                 await new Promise((resolve) =>
@@ -63,21 +90,17 @@ export class RepositoryService {
             }
         }
     
-        throw new Error('GitHub request failed.');
+        throw new ServiceUnavailableException(
+            'Unable to reach GitHub right now. Please try again later.',
+        );
     }
 
     async getRepositoryInfo(repositoryDto: RepositoryDto){
-        const githubUrl = repositoryDto.githubUrl;
         
         const { owner, repo } = this.extractRepositoryInfo(repositoryDto.githubUrl);
 
-        const response = await firstValueFrom(
-            this.httpService.get(
-                `https://api.github.com/repos/${owner}/${repo}`,
-                {
-                    headers: this.getGithubHeaders(),
-                },
-            ),
+        const response = await this.githubGet(
+            `https://api.github.com/repos/${owner}/${repo}`,
         );
 
         return {
@@ -90,15 +113,13 @@ export class RepositoryService {
     }
 
     async getRepositoryContents(repositoryDto: RepositoryDto) {
-        const githubUrl = repositoryDto.githubUrl;
 
         const { owner, repo } = this.extractRepositoryInfo(repositoryDto.githubUrl);
 
-        const response  = await firstValueFrom(
-            this.httpService.get(
-                `https://api.github.com/repos/${owner}/${repo}/contents`,
-            ),
+        const response = await this.githubGet(
+            `https://api.github.com/repos/${owner}/${repo}/contents`,
         );
+    
         return response.data.map((item: any) =>({
             name: item.name,
             type: item.type,

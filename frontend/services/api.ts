@@ -1,5 +1,6 @@
-const API_URL = "http://localhost:3001";
-
+const API_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    
 export async function login(
     email: string,
     password: string,
@@ -98,7 +99,11 @@ export async function indexProject(
     );
 
     if (!response.ok) {
-        throw new Error("Failed to index project");
+        const errorData = await response.json().catch(() => null);
+
+        throw new Error(
+            errorData?.message || "Failed to index project",
+        );
     }
 
     return response.json();
@@ -124,7 +129,11 @@ export async function searchProject(
     );
 
     if (!response.ok) {
-        throw new Error("Failed to search project");
+        const errorData = await response.json().catch(() => null);
+
+        throw new Error(
+            errorData?.message || "Failed to search project",
+        );
     }
 
     return response.json();

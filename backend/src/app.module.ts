@@ -9,18 +9,26 @@ import { RepositoryModule } from './modules/repository/repository.module';
 import { ChunkingModule } from './modules/chunking/chunking.module';
 import { EmbeddingModule } from './modules/embedding/embedding.module';
 import { SearchModule } from './modules/search/search.module';
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
   imports: [
-            PrismaModule,
-            UsersModule, 
-            AuthModule, 
-            ProjectsModule, 
-            RepositoryModule, 
-            ChunkingModule, 
-            EmbeddingModule,
-            SearchModule,
-          ],
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+
+    PrismaModule,
+    UsersModule,
+    AuthModule,
+    ProjectsModule,
+    RepositoryModule,
+    ChunkingModule,
+    EmbeddingModule,
+    SearchModule,
+    ConfigModule
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
