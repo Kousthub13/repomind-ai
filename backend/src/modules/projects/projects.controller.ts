@@ -31,8 +31,15 @@ export class ProjectsController {
     }
 
     @Get(':id')
-    async getProjectById(@Param('id') id: string) {
-        return this.projectsService.getProjectById(id);
+    @UseGuards(JwtAuthGuard)
+    async getProjectById(
+        @Param('id') id: string,
+        @Req() req: any,
+    ) {
+        return this.projectsService.getProjectById(
+            id,
+            req.user.userId,
+        );
     }
 
     @UseGuards(JwtAuthGuard)

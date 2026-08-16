@@ -34,12 +34,33 @@ export class ProjectsService {
         });
     }
 
-    async getProjectById(id: string) {
-        return this.prisma.project.findUnique({
+    async getProjectById(id: string, userId: string) {
+        const project = await this.prisma.project.findFirst({
             where: {
                 id,
+                userId,
+            },
+            include: {
+                embeddings: {
+                    select: {
+                        id: true,
+                    },
+                    take: 1,
+                },
             },
         });
+
+        if (!project) {
+            return null;
+        }
+
+        return {
+            id: project.id,
+            name: project.name,
+            githubUrl: project.githubUrl,
+            createdAt: project.createdAt,
+            isIndexed: project.embeddings.length > 0,
+        };
     }
 
     async deleteProject(id: string, userId: string) {
@@ -49,7 +70,7 @@ export class ProjectsService {
                 userId,
             },
         });
-    
+
         if (!project) {
             throw new NotFoundException("Project not found");
         }
@@ -92,6 +113,21 @@ export class ProjectsService {
         if (!project) {
             throw new NotFoundException('Project not found');
         }
+
+        await this.prisma.$executeRaw`
+            DELETE FROM code_embedding_vectors
+            WHERE id IN (
+                SELECT id
+                FROM "CodeEmbedding"
+                WHERE "projectId" = ${projectId}
+            )
+        `;
+
+        await this.prisma.codeEmbedding.deleteMany({
+            where: {
+                projectId,
+            },
+        });
 
         const chunks =
             await this.repositoryService.getRepositorySourceCode({

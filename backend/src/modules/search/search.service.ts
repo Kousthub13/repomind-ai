@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EmbeddingService } from '../embedding/embedding.service';
 import { AiService } from '../ai/ai.service';
+import {
+    NotFoundException,
+} from '@nestjs/common';
 
 @Injectable()
 export class SearchService {
@@ -13,8 +16,20 @@ export class SearchService {
 
     async search(
         projectId: string,
+        userId: string,
         query: string,
     ) {
+        const project = await this.prisma.project.findFirst({
+            where: {
+                id: projectId,
+                userId,
+            },
+        });
+    
+        if (!project) {
+            throw new NotFoundException('Project not found');
+        }
+
         const queryEmbedding =
             await this.embeddingService.generateEmbedding(query);
 
@@ -39,7 +54,7 @@ export class SearchService {
     JOIN "CodeEmbedding" ce
         ON cv.id = ce.id
     WHERE ce."projectId" = ${projectId}
-      AND 1 - (cv.embedding <=> ${vector}::vector) >= 0.50
+      AND 1 - (cv.embedding <=> ${vector}::vector) >= 0.55
     ORDER BY cv.embedding <=> ${vector}::vector
     LIMIT 5;
 `;
