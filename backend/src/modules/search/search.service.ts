@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EmbeddingService } from '../embedding/embedding.service';
-import { AiService } from '../ai/ai.service';
+import { LangChainAiService } from '../ai/langchain-ai.service';
 import {
     NotFoundException,
 } from '@nestjs/common';
@@ -11,7 +11,7 @@ export class SearchService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly embeddingService: EmbeddingService,
-        private readonly aiService: AiService,
+        private readonly aiService: LangChainAiService,
     ) { }
 
     async search(
