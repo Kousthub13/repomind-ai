@@ -1,8 +1,10 @@
-# repomind-ai
+# Repomind-AI
 
 AI-powered GitHub repository explorer and code-search assistant built with Next.js, NestJS, Prisma, PostgreSQL, pgvector, LangChain, and Google Gemini.
 
 ## Live Demo
+
+🎥 **Working Demo:** [Watch the demo] (https://drive.google.com/file/d/1oH5hcaK3g8EUkjNCm1u0k9AQ4231VJXH/view?usp=drive_link)
 
 - Frontend: https://repomind-ai-five.vercel.app/login
 - Backend: https://repomind-ai-wgm7.onrender.com
