@@ -399,10 +399,6 @@ A successful production search returns an AI answer together with source files a
 - Automated CI/CD validation and tests
 - Production observability and structured logging
 
-## License
-
-Add your preferred project license before publishing the repository as open source.
-
 ## Author
 
 Kousthub Hothur
